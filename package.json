@@ -12,7 +12,12 @@
   },
   "devDependencies": {
     "@babel/core": "7.2.0",
-    "parcel-bundler": "^1.6.1"
+    "parcel-bundler": "^1.6.1",
+    "parcel-plugin-static-files-copy": "^2.4.3"
+  },
+  "staticFiles": {
+    "staticPath": "public",
+    "watcherGlob": "**"
   },
   "keywords": [
     "javascript",
