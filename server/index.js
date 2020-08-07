@@ -14,6 +14,6 @@ app.get("/api", (req, res)=>{
 app.use("/", express.static(__dirname + "/../dist" ));
 
 const server = http.createServer(app);
-server.listen(8080, "0.0.0.0", ()=>{
+server.listen(2345, "0.0.0.0", ()=>{
     console.log("Server started on:", 8080);
 });
