@@ -14,3 +14,7 @@ try {
     });
   }
 } catch (e) {}
+
+if (!window.config) {
+  window.config = { token: '' };
+}

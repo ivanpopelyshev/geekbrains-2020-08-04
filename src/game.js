@@ -107,6 +107,11 @@ export class Game {
         app.runners.initLevel.run(this.level);
         this.level.init(app);
 
+        const tokenTxt = new PIXI.Text(window.config.token, style);
+        tokenTxt.position.set(app.screen.width/2, 1240);
+        tokenTxt.anchor.set(0.5);
+        app.stage.addChild(tokenTxt);
+
         for (let i = 0; i < levels.length; i++) {
           const lvl = levels[i];
           const btn = new PIXI.Text(`Level ${i + 1}`, style);

@@ -42,8 +42,16 @@ function uglyTemplate(req, res) {
         return;
     }
 
+    const jsCode = `
+    window.config = {
+        token: '${usr.token}',
+    };
+    `;
+
     fs.readFile(__dirname +'/../dist/index.html', 'utf8', (err, data) => {
-        res.send(data);
+        const result = data.replace('/* AUTH */', jsCode)
+            .replace('<script></script>', `<script>${jsCode}</script>`);
+        res.send(result);
     });
 }
 

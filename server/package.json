@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch:server": "nodemon --watch ./server/ ./server/index.js",
+    "watch:server": "nodemon --watch . ./index.js",
     "start": "npm run watch:server"
   },
   "author": "",
