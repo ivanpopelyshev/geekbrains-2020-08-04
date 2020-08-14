@@ -5,6 +5,7 @@ import { Background } from "./background";
 import { Phys } from "./phys";
 import { MouseController } from "./mouse";
 import { Visual } from "./visual";
+import { Network } from "./network";
 
 export class App {
   constructor() {
@@ -35,6 +36,7 @@ export class App {
     this.addSystem("visual", new Visual(this));
     this.addSystem("phys", new Phys(this));
     this.addSystem("mouse", new MouseController(this));
+    this.addSystem("network", new Network(this));
   }
 
   addSystem(name, inst) {

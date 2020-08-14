@@ -1,9 +1,10 @@
 import * as PIXI from "./pixi";
-import { LevelTiled, LevelCircles } from "./levels";
+import { LevelTiled, LevelCircles, LevelMP } from "./levels";
 import { Entity } from "./entity";
 
 const lvl1 = new LevelCircles({});
 const lvl2 = new LevelTiled({});
+const lvl3 = new LevelMP({});
 
 const style = new PIXI.TextStyle({
   fontFamily: "Arial",
@@ -26,7 +27,7 @@ export class Game {
   constructor(app) {
     this.app = app;
 
-    this.levels = [lvl1, lvl2];
+    this.levels = [lvl1, lvl2, lvl3];
 
     this.entities = [];
 

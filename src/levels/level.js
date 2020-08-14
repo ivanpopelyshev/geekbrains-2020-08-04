@@ -4,6 +4,7 @@ export class Level {
     this.bgPosition = { x: 0, y: 0 };
 
     this.warp = false;
+    this.network = false;
   }
 
   init(app) {}
