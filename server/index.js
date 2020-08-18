@@ -86,6 +86,9 @@ const wsByToken = {};
 const players = [];
 let playerCounter = 0;
 
+let dataChanged = false;
+const TICK = 0.1;
+
 class WSUser {
     constructor(user, socket) {
         this.user = user;
@@ -99,10 +102,39 @@ class WSUser {
 
         this.player.x = (Math.random() * 520 | 0) + 100;
         this.player.y = (Math.random() * 1080 | 0) + 100;
+        this.target = { x: this.player.x, y: this.player.y };
 
         players.push(this.player);
 
         broadcast();
+
+        this.socket.on('click', (data) => {
+            this.target.x = data.x || 0;
+            this.target.y = data.y || 0;
+            broadcast();
+        });
+    }
+
+    update() {
+        const { player, target } = this;
+
+        const dx = target.x - player.x, dy = target.y - player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 1e-3) {
+            return;
+        }
+
+        const speed = 300; // per second
+        const dd = speed * TICK;// per tick
+        if (dist <= dd) {
+            player.x = target.x;
+            player.y = target.y;
+        } else {
+            player.x += dx / dist * dd;
+            player.y += dy / dist * dd;
+        }
+        dataChanged = true;
     }
 
     onDisconnect() {
@@ -148,3 +180,14 @@ websocket.on('connection', function (socket) {
         socket.wsUser.onDisconnect();
     }
 });
+
+setInterval(() => {
+    dataChanged = false;
+    for (let key in wsByToken) {
+        const wsUser = wsByToken[key];
+        wsUser.update();
+    }
+    if (dataChanged) {
+        broadcast();
+    }
+}, 1000 * TICK);

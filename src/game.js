@@ -104,7 +104,7 @@ export class Game {
       setTimeout(() => {
         app.preloader.hide();
 
-        this.level = lvl1;
+        this.level = lvl3;
         app.runners.initLevel.run(this.level);
         this.level.init(app);
 

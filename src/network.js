@@ -31,6 +31,16 @@ export class Network {
     }
     this.sid++;
     this.connect();
+
+    const { pixiRoot } = this.app;
+
+    pixiRoot.on("pointerdown", e => {
+      const point = pixiRoot.toLocal(e.data.global);
+
+      if (this.socket && this.active === 2) {
+        this.socket.emit('click', { x: point.x, y: point.y });
+      }
+    });
   }
 
   disconnect() {
