@@ -77,6 +77,7 @@ export class Network {
       this.data = data;
       console.log(data);
     }).on('player_add', (player) => {
+      this.active = 2;
       const sprite = new PIXI.Sprite(this.app.loader.resources.bunny.texture);
       sprite.anchor.set(0.5);
       sprite.uid = player.uid;
