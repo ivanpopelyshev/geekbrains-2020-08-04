@@ -104,7 +104,12 @@ class WSUser {
         this.player.y = (Math.random() * 1080 | 0) + 100;
         this.target = { x: this.player.x, y: this.player.y };
 
-        this.socket.emit('game', {players});
+        // this.socket.emit('game', {players});
+        //TODO: init packet?
+
+        for (let i=0;i<players.length;i++) {
+            this.socket.emit('player_add', players[i]);
+        }
         broadcastEvent('player_add', this.player);
 
         players.push(this.player);
