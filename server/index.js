@@ -104,9 +104,10 @@ class WSUser {
         this.player.y = (Math.random() * 1080 | 0) + 100;
         this.target = { x: this.player.x, y: this.player.y };
 
-        players.push(this.player);
+        this.socket.emit('game', {players});
+        broadcastEvent('player_add', this.player);
 
-        broadcast();
+        players.push(this.player);
 
         this.socket.on('click', (data) => {
             this.target.x = data.x || 0;
@@ -114,6 +115,9 @@ class WSUser {
             broadcast();
         });
     }
+
+    // 1. ADD / REMOVE events
+    // 2. interpolation
 
     update() {
         const { player, target } = this;
@@ -147,6 +151,7 @@ class WSUser {
 
         const ind = players.indexOf(this.player);
         players.splice(ind, 1);
+        broadcastEvent('player_remove', this.player);
     }
 }
 
@@ -154,6 +159,13 @@ function broadcast() {
     for (let key in wsByToken) {
         const wsUser = wsByToken[key];
         wsUser.socket.emit('game', {players});
+    }
+}
+
+function broadcastEvent(ev, data) {
+    for (let key in wsByToken) {
+        const wsUser = wsByToken[key];
+        wsUser.socket.emit(ev, data);
     }
 }
 

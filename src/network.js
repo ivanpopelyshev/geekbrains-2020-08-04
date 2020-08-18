@@ -76,6 +76,39 @@ export class Network {
       this.active = 2;
       this.data = data;
       console.log(data);
+    }).on('player_add', (player) => {
+      const sprite = new PIXI.Sprite(this.app.loader.resources.bunny.texture);
+      sprite.anchor.set(0.5);
+      sprite.uid = player.uid;
+
+      const text = new PIXI.Text(player.name, style);
+      text.position.set(0, -30);
+      text.anchor.set(0.5, 1.0);
+      sprite.addChild(text);
+
+      this.sprites.push(sprite);
+
+      this.app.pixiRoot.addChild(sprite);
+
+      this.data.players.push(player);
+    }).on('player_remove', (player) => {
+      const { sprites } = this;
+      for (let j=0;j<sprites.length;j++) {
+        const sprite = sprites[j];
+        if (player.uid === sprite.uid) {
+          sprites.splice(j, 1);
+          sprite.destroy();
+          break;
+        }
+      }
+
+      const { players } = this.data;
+      for (let j=0;j<players.length;j++) {
+        if (player.uid === players[j].uid) {
+          players.splice(j, 1);
+          break;
+        }
+      }
     });
 
     this.active = 1;
@@ -84,18 +117,6 @@ export class Network {
   loop() {
     const { players } = this.data;
     const { sprites } = this;
-
-    cycle:for (let i=sprites.length-1;i>=0;i--) {
-      const sprite = sprites[i];
-
-      for (let j=0;j<players.length;j++) {
-        if (sprite.uid === players[j].uid) {
-          continue cycle;
-        }
-      }
-      sprites.splice(i, 1);
-      sprite.destroy();
-    }
 
     cycle2:for (let i=0;i<players.length;i++) {
       const player = players[i];
@@ -107,19 +128,7 @@ export class Network {
           continue cycle2;
         }
       }
-
-      const sprite = new PIXI.Sprite(this.app.loader.resources.bunny.texture);
-      sprite.anchor.set(0.5);
-      sprite.uid = player.uid;
-
-      const text = new PIXI.Text(player.name, style);
-      text.position.set(0, -30);
-      text.anchor.set(0.5, 1.0);
-      sprite.addChild(text);
-
-      sprites.push(sprite);
-
-      this.app.pixiRoot.addChild(sprite);
+      console.log('desync!');
     }
   }
 }
