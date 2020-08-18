@@ -175,10 +175,12 @@ websocket.on('connection', function (socket) {
     }
 
     socket.on('reg', regHandler);
-}).on('disconnect', function (socket) {
-    if (socket.wsUser) {
-        socket.wsUser.onDisconnect();
-    }
+
+    socket.on('disconnect', () => {
+        if (socket.wsUser) {
+            socket.wsUser.onDisconnect();
+        }
+    })
 });
 
 setInterval(() => {
