@@ -19,5 +19,10 @@ export class Entity {
         this.body = new Body(dict.body);
       }
     }
+
+    if (dict.actor) {
+      this.actor = dict.actor;
+      dict.actor.entity = this;
+    }
   }
 }

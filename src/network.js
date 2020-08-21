@@ -1,11 +1,5 @@
 import * as io from "socket.io-client";
-import * as PIXI from "pixi.js";
-
-const style = new PIXI.TextStyle({
-  fontFamily: "Arial",
-  fontSize: 20,
-  fill: "#ffffff",
-});
+import { Actor } from "./shared/Actor";
 
 export class Network {
   constructor(app) {
@@ -14,14 +8,13 @@ export class Network {
     this.sid = 0;
     this.socket = null;
 
-    this.data = { players: [] };
-
     this.sprites = [];
+    this.actorByUid = {};
+    this.actors = [];
   }
 
   initLevel(lvl) {
     this.sprites = [];
-    this.data = { players: [] };
     if (!lvl.network) {
       if (this.active) {
         this.disconnect();
@@ -74,62 +67,58 @@ export class Network {
         return;
       }
       this.active = 2;
-      this.data = data;
+
+      for (let i=0;i<data.players.length;i++) {
+        const player = data.players[i];
+        this.actorByUid[player.uid].applyJson(player);
+      }
+
       console.log(data);
-    }).on('player_add', (player) => {
+    }).on('actor_add', (player) => {
       this.active = 2;
-      const sprite = new PIXI.Sprite(this.app.loader.resources.bunny.texture);
-      sprite.anchor.set(0.5);
-      sprite.uid = player.uid;
 
-      const text = new PIXI.Text(player.name, style);
-      text.position.set(0, -30);
-      text.anchor.set(0.5, 1.0);
-      sprite.addChild(text);
+      const actor = new Actor();
+      actor.applyJson(player);
 
-      this.sprites.push(sprite);
+      this.app.game.add({ actor } , {
+        bunny: 1,
+        text: player.name
+      })
 
-      this.app.pixiRoot.addChild(sprite);
+      this.actorByUid[player.uid] = actor;
+      this.actors.push(actor);
 
-      this.data.players.push(player);
-    }).on('player_remove', (player) => {
-      const { sprites } = this;
-      for (let j=0;j<sprites.length;j++) {
-        const sprite = sprites[j];
-        if (player.uid === sprite.uid) {
-          sprites.splice(j, 1);
-          sprite.destroy();
-          break;
-        }
-      }
+    }).on('actor_remove', (uid) => {
+      const actor = this.actorByUid[uid];
+      this.actorByUid[uid] = null;
+      this.actors.splice(this.actors.indexOf(actor), 1);
 
-      const { players } = this.data;
-      for (let j=0;j<players.length;j++) {
-        if (player.uid === players[j].uid) {
-          players.splice(j, 1);
-          break;
-        }
-      }
+      this.app.game.remove(actor.entity);
     });
 
     this.active = 1;
   }
 
-  loop() {
-    const { players } = this.data;
-    const { sprites } = this;
+  loop(deltaFrame) {
+    const { actors } = this;
 
-    cycle2:for (let i=0;i<players.length;i++) {
-      const player = players[i];
-      for (let j=0;j<sprites.length;j++) {
-        const sprite = sprites[j];
-        if (sprite.uid === player.uid) {
-          sprite.x = player.x;
-          sprite.y = player.y;
-          continue cycle2;
-        }
+    //goto label;
+
+    for (let i=0;i<actors.length;i++) {
+      const actor = actors[i];
+      const {entity} = actor;
+      const {pixi} = entity;
+
+      actor.physUpdate(deltaFrame / 60);
+
+      if (actor.teleport) {
+        actor.teleport = false;
+        pixi.x = actor.x;
+        pixi.y = actor.y;
+      } else {
+        pixi.x = actor.x;
+        pixi.y = actor.y;
       }
-      console.log('desync!');
     }
   }
 }

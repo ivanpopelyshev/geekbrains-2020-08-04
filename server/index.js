@@ -83,11 +83,13 @@ const io = require("socket.io");
 const websocket = io.listen(server, {log: false, transports: ['websocket']});
 const wsByToken = {};
 
-const players = [];
-let playerCounter = 0;
+const actors = [];
+let actorCounter = 0;
 
 let dataChanged = false;
 const TICK = 0.1;
+
+const { Actor } = require('../src/shared/Actor');
 
 class WSUser {
     constructor(user, socket) {
@@ -97,54 +99,31 @@ class WSUser {
     }
 
     onJoin() {
-        const uid = ++playerCounter;
-        this.player = {x: 0, y: 0, name: `user${uid}`, uid};
-
-        this.player.x = (Math.random() * 520 | 0) + 100;
-        this.player.y = (Math.random() * 1080 | 0) + 100;
-        this.target = { x: this.player.x, y: this.player.y };
+        const actor = this.actor = new Actor();
+        actor.uid = ++actorCounter;
+        actor.name = `user${actor.uid}`;
+        actor.x = (Math.random() * 520 | 0) + 100;
+        actor.y = (Math.random() * 1080 | 0) + 100;
+        actor.target = { x: actor.x, y: actor.y };
 
         // this.socket.emit('game', {players});
         //TODO: init packet?
 
-        for (let i=0;i<players.length;i++) {
-            this.socket.emit('player_add', players[i]);
+        for (let i=0;i<actors.length;i++) {
+            this.socket.emit('actor_add', actors[i].toJson());
         }
-        broadcastEvent('player_add', this.player);
+        broadcastEvent('actor_add', actor.toJson());
 
-        players.push(this.player);
+        actors.push(actor);
 
         this.socket.on('click', (data) => {
-            this.target.x = data.x || 0;
-            this.target.y = data.y || 0;
+            actor.target.x = data.x || 0;
+            actor.target.y = data.y || 0;
             broadcast();
         });
     }
 
-    // 1. ADD / REMOVE events
     // 2. interpolation
-
-    update() {
-        const { player, target } = this;
-
-        const dx = target.x - player.x, dy = target.y - player.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 1e-3) {
-            return;
-        }
-
-        const speed = 300; // per second
-        const dd = speed * TICK;// per tick
-        if (dist <= dd) {
-            player.x = target.x;
-            player.y = target.y;
-        } else {
-            player.x += dx / dist * dd;
-            player.y += dy / dist * dd;
-        }
-        dataChanged = true;
-    }
 
     onDisconnect() {
         if (!this.socket) {
@@ -154,16 +133,18 @@ class WSUser {
         this.socket = null;
         delete wsByToken[this.user.token];
 
-        const ind = players.indexOf(this.player);
-        players.splice(ind, 1);
-        broadcastEvent('player_remove', this.player);
+        const ind = actors.indexOf(this.actor);
+        actors.splice(ind, 1);
+        broadcastEvent('actor_remove', this.actor.uid);
     }
 }
 
 function broadcast() {
     for (let key in wsByToken) {
         const wsUser = wsByToken[key];
-        wsUser.socket.emit('game', {players});
+        wsUser.socket.emit('game', {
+            players: actors.map((x) => x.toDeltaJson())
+        });
     }
 }
 
@@ -204,7 +185,8 @@ setInterval(() => {
     dataChanged = false;
     for (let key in wsByToken) {
         const wsUser = wsByToken[key];
-        wsUser.update();
+        wsUser.actor.physUpdate(TICK);
+        dataChanged |= wsUser.actor.changed;
     }
     if (dataChanged) {
         broadcast();

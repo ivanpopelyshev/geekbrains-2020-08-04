@@ -1,6 +1,12 @@
 import * as PIXI from "pixi.js";
 import { Convex } from "./lib/p2";
 
+const style = new PIXI.TextStyle({
+  fontFamily: "Arial",
+  fontSize: 20,
+  fill: "#ffffff",
+});
+
 export class Visual {
   constructor(app) {
     this.app = app;
@@ -38,7 +44,7 @@ export class Visual {
       coeff = coeff / 1000.0;
 
       gl_FragColor = uColor + vec4(coeff * vec3(1.0, 1.0, 1.0), 1.0);
-    }    
+    }
     `;
 
     this.prog = new PIXI.Program(vert, frag, "vanya");
@@ -60,6 +66,13 @@ export class Visual {
       entity.pixi.scale.set(vis.size || 2);
       entity.pixi.anchor.set(0.5);
       stage.addChild(entity.pixi);
+
+      if (vis.text) {
+        const text = new PIXI.Text(vis.text, style);
+        text.position.set(0, -30);
+        text.anchor.set(0.5, 1.0);
+        entity.pixi.addChild(text);
+      }
     }
 
     if (vis.shaderColor && entity.body) {
@@ -143,7 +156,7 @@ export class Visual {
     );
     return pos * 0.5 + 0.5;;
   }
-   
+
   void main() {
     vec2 coord = vTextureCoord;
     coord = coord * inputSize.xy / outputFrame.zw;
