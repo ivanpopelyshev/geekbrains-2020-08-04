@@ -70,7 +70,10 @@ export class Network {
 
       for (let i=0;i<data.players.length;i++) {
         const player = data.players[i];
-        this.actorByUid[player.uid].applyJson(player);
+        const actor = this.actorByUid[player.uid];
+        actor.ox += actor.x - player.x;
+        actor.oy += actor.y - player.y;
+        actor.applyJson(player);
       }
 
       console.log(data);
@@ -111,14 +114,14 @@ export class Network {
 
       actor.physUpdate(deltaFrame / 60);
 
-      if (actor.teleport) {
-        actor.teleport = false;
-        pixi.x = actor.x;
-        pixi.y = actor.y;
-      } else {
-        pixi.x = actor.x;
-        pixi.y = actor.y;
-      }
+      if (Math.abs(actor.ox) < 0.1) actor.ox = 0;
+      else actor.ox *= 0.85;
+
+      if (Math.abs(actor.oy) < 0.1) actor.oy = 0;
+      else actor.oy *= 0.85;
+
+      pixi.x = actor.x + actor.ox;
+      pixi.y = actor.y + actor.oy;
     }
   }
 }

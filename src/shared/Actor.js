@@ -8,8 +8,10 @@ class Actor {
     this.target = { x: 0, y: 0 };
     this.entity = null;
 
-    this.teleport = true;
+    // local vars
     this.changed = false;
+    this.ox = 0;
+    this.oy = 0;
   }
 
   physUpdate(deltaS) {
