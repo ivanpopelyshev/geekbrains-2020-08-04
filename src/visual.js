@@ -95,11 +95,12 @@ export class Visual {
   }
 
   removeEntity(entity) {
+    const { pixiRoot } = this.app;
     if (entity.pixi) {
-      this.pixiRoot.removeChild(entity.pixi);
+      pixiRoot.removeChild(entity.pixi);
     }
     if (entity.pixiDebug) {
-      this.pixiRoot.removeChild(entity.pixiDebug);
+      pixiRoot.removeChild(entity.pixiDebug);
     }
   }
 
