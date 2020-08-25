@@ -83,13 +83,9 @@ const io = require("socket.io");
 const websocket = io.listen(server, {log: false, transports: ['websocket']});
 const wsByToken = {};
 
-const actors = [];
-let actorCounter = 0;
+const { Room } = require("./Room");
 
-let dataChanged = false;
-const TICK = 0.1;
-
-const { Actor } = require('../src/shared/Actor');
+const room = new Room();
 
 class WSUser {
     constructor(user, socket) {
@@ -98,33 +94,7 @@ class WSUser {
         socket.wsUser = this;
     }
 
-    onJoin() {
-        const actor = this.actor = new Actor();
-        actor.uid = ++actorCounter;
-        actor.name = `user${actor.uid}`;
-        actor.x = (Math.random() * 520 | 0) + 100;
-        actor.y = (Math.random() * 1080 | 0) + 100;
-        actor.target = { x: actor.x, y: actor.y };
-
-        // this.socket.emit('game', {players});
-        //TODO: init packet?
-
-        for (let i=0;i<actors.length;i++) {
-            this.socket.emit('actor_add', actors[i].toJson());
-        }
-        broadcastEvent('actor_add', actor.toJson());
-
-        actors.push(actor);
-
-        this.socket.on('click', (data) => {
-            actor.target.x = data.x || 0;
-            actor.target.y = data.y || 0;
-            broadcast();
-        });
-    }
-
     // 2. interpolation
-
     onDisconnect() {
         if (!this.socket) {
             return;
@@ -133,25 +103,7 @@ class WSUser {
         this.socket = null;
         delete wsByToken[this.user.token];
 
-        const ind = actors.indexOf(this.actor);
-        actors.splice(ind, 1);
-        broadcastEvent('actor_remove', this.actor.uid);
-    }
-}
-
-function broadcast() {
-    for (let key in wsByToken) {
-        const wsUser = wsByToken[key];
-        wsUser.socket.emit('game', {
-            players: actors.map((x) => x.toDeltaJson())
-        });
-    }
-}
-
-function broadcastEvent(ev, data) {
-    for (let key in wsByToken) {
-        const wsUser = wsByToken[key];
-        wsUser.socket.emit(ev, data);
+        room.onLeave(this);
     }
 }
 
@@ -166,7 +118,7 @@ websocket.on('connection', function (socket) {
 
             wsUser = new WSUser(userByToken[data.token], socket);
             wsByToken[data.token] = wsUser;
-            wsUser.onJoin();
+            room.onJoin(wsUser);
 
             socket.off('reg', regHandler);
         }
@@ -181,14 +133,4 @@ websocket.on('connection', function (socket) {
     })
 });
 
-setInterval(() => {
-    dataChanged = false;
-    for (let key in wsByToken) {
-        const wsUser = wsByToken[key];
-        wsUser.actor.physUpdate(TICK);
-        dataChanged |= wsUser.actor.changed;
-    }
-    if (dataChanged) {
-        broadcast();
-    }
-}, 1000 * TICK);
+room.start();

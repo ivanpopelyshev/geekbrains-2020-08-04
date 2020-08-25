@@ -31,7 +31,7 @@ export class Network {
       const point = pixiRoot.toLocal(e.data.global);
 
       if (this.socket && this.active === 2) {
-        this.socket.emit('click', { x: point.x, y: point.y });
+        this.socket.emit('click', { x: Math.round(point.x), y: Math.round(point.y) });
       }
     });
   }
@@ -45,6 +45,11 @@ export class Network {
     this.active = 0;
     this.sid++;
   }
+
+  //TODO:
+  //----1. move connect away
+  //2. server bots
+  //3. separate to rooms
 
   connect() {
     const {sid} = this;
@@ -75,8 +80,6 @@ export class Network {
         actor.oy += actor.y - player.y;
         actor.applyJson(player);
       }
-
-      console.log(data);
     }).on('actor_add', (player) => {
       this.active = 2;
 
