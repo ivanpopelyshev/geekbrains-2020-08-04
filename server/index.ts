@@ -1,8 +1,11 @@
-const http = require("http");
-const express = require("express");
-const uuid = require("uuid");
-const md5 = require("md5");
-const fs = require('fs');
+import * as http from "http";
+import * as express from "express";
+import * as fs from "fs";
+import * as md5 from "md5";
+import * as uuid from "uuid";
+import * as io from "socket.io";
+
+import { Room } from "./Room";
 
 const api_secret = 'VmGsge58F2kL6TOCoHnq';
 
@@ -11,16 +14,18 @@ const app = express();
 app.use("/api", express.json());
 
 class User {
-    constructor(options) {
+    token: string;
+    viewer_id: number;
+    constructor(options: any) {
         const {token, viewer_id} = options || {};
         this.token = token || uuid();
-        this.viewer_id = viewer_id || 0;
+        this.viewer_id = +viewer_id || 0;
     }
 }
 
 const userByViewer = {}, userByToken = {};
 
-function getUser(req) {
+function getUser(req: any) {
     const {viewer_id, api_id, auth_key} = req.query;
     const check_auth_key = md5(api_id + '_' + viewer_id + '_' + api_secret);
 
@@ -79,16 +84,14 @@ server.listen(2345, "0.0.0.0", () => {
 
 // ********* NETWORK ********
 
-const io = require("socket.io");
 const websocket = io.listen(server, {log: false, transports: ['websocket']});
 const wsByToken = {};
-
-const { Room } = require("./Room");
-
 const room = new Room();
 
 class WSUser {
-    constructor(user, socket) {
+    user: User;
+    socket: any;
+    constructor(user: User, socket: any) {
         this.user = user;
         this.socket = socket;
         socket.wsUser = this;
@@ -107,7 +110,7 @@ class WSUser {
     }
 }
 
-websocket.on('connection', function (socket) {
+websocket.on('connection', function (socket: any) {
     const regHandler = (data) => {
         if (data.token && userByToken[data.token]) {
             let wsUser = wsByToken[data.token];

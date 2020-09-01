@@ -1,9 +1,16 @@
-const {Actor} = require('../src/shared/Actor');
-const {TestBot} = require('./TestBot');
+import {Actor} from './shared/Actor';
+import {TestBot} from './TestBot';
 
 let roomCounter = 0;
 
-class Room {
+export class Room {
+    uid: number;
+    actors: Array<Actor>;
+    actorCounter: number;
+    TICK: number;
+    wsUsers: Array<any>;
+    intervalId: any;
+
     constructor() {
         this.uid = ++roomCounter;
 
@@ -100,7 +107,7 @@ class Room {
         for (let i=0;i<actors.length;i++) {
             const actor = actors[i];
             actor.physUpdate(this.TICK);
-            dataChanged |= actor.changed;
+            dataChanged = dataChanged || actor.changed;
         }
         if (dataChanged) {
             this.broadcast();
@@ -125,7 +132,3 @@ class Room {
         clearInterval(this.intervalId);
     }
 }
-
-module.exports = {
-    Room
-};

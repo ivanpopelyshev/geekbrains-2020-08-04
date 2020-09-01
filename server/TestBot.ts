@@ -1,9 +1,17 @@
-const EventEmitter = require('events');
-const {Actor} = require('../src/shared/Actor');
+import { EventEmitter } from 'events';
+import {Actor} from './shared/Actor';
 
 let botCounter = 0;
 
-class TestBot {
+export class TestBot {
+    socket: EventEmitter;
+    sid: number;
+    actorByUid: {[key: number]: Actor}
+    actors: Array<Actor>;
+    active: number;
+    moveTicks: number;
+    isBot: boolean;
+
     constructor() {
         this.socket = null;
         this.sid = ++botCounter;
@@ -66,8 +74,4 @@ class TestBot {
             this.moveTicks--;
         }
     }
-}
-
-module.exports = {
-    TestBot
 }
