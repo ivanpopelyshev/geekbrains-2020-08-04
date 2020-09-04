@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "target": "es6"
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "allowJs": true
+}
