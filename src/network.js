@@ -1,15 +1,16 @@
-import * as io from "socket.io-client";
-import { Actor } from "./shared/Actor";
+import { Room, Client } from "colyseus.js";
+import { Actor, State } from "./shared/Actor";
+import PIXI from "pixi.js";
 
 export class Network {
   constructor(app) {
     this.app = app;
-    this.active = false;
+    this.active = 0;
     this.sid = 0;
-    this.socket = null;
+    this.client = new Client();
 
     this.sprites = [];
-    this.actorByUid = {};
+    this.room = null;
     this.actors = [];
   }
 
@@ -23,86 +24,62 @@ export class Network {
       return;
     }
     this.sid++;
-    this.connect();
+    this.authenticate();
 
     const { pixiRoot } = this.app;
 
     pixiRoot.on("pointerdown", e => {
       const point = pixiRoot.toLocal(e.data.global);
 
-      if (this.socket && this.active === 2) {
-        this.socket.emit('click', { x: Math.round(point.x), y: Math.round(point.y) });
+      if (this.room && this.active === 2) {
+        this.room.send('click', { x: Math.round(point.x), y: Math.round(point.y) });
       }
     });
   }
 
-  disconnect() {
-    if (!this.active) {
-      return;
-    }
-    this.socket.close();
-    this.socket = null;
-    this.active = 0;
-    this.sid++;
-  }
+  async authenticate() {
+    this.active = 1;
+    // anonymous auth
+    //await this.client.auth.login();
+    console.log("Success!", this.client.auth);
 
-  //TODO:
-  //----1. move connect away
-  //2. server bots
-  //3. separate to rooms
+    this.room = await this.client.joinOrCreate("bunnies");
 
-  connect() {
-    const {sid} = this;
+    this.active = 2;
 
-    let socket = this.socket = io.connect(`${window.location.protocol}//${window.location.host}`, {transports: ['websocket']});
-    socket.on('connect', (data) => {
-      if (this.sid !== sid) {
-        socket.close();
-        return;
-      }
-      this.active = 1;
-      socket.emit('reg', {token: window.config.token});
-    }).on('disconnect', (data) => {
-      if (this.sid !== sid) {
-        return;
-      }
-      this.active = 0;
-    }).on('game', (data) => {
-      if (this.sid !== sid) {
-        return;
-      }
-      this.active = 2;
-
-      for (let i=0;i<data.players.length;i++) {
-        const player = data.players[i];
-        const actor = this.actorByUid[player.uid];
-        actor.ox += actor.x - player.x;
-        actor.oy += actor.y - player.y;
-        actor.applyJson(player);
-      }
-    }).on('actor_add', (player) => {
-      this.active = 2;
-
-      const actor = new Actor();
-      actor.applyJson(player);
+    this.room.state.actorByUid.onAdd = (actor, uid) => {
+      actor.physUpdate = Actor.prototype.physUpdate;
+      actor.ox = 0;
+      actor.oy = 0;
+      this.actors.push(actor);
 
       this.app.game.add({ actor } , {
         bunny: 1,
-        text: player.name
-      })
+        text: actor.name
+      });
 
-      this.actorByUid[player.uid] = actor;
-      this.actors.push(actor);
+      actor.onChange = (changes) => {
+        for (let i=0;i<changes.length;i++) {
+          const change = changes[i];
+          if (change.field==='x') {
+            actor.ox += change.previousValue - change.value;
+          }
+          if (change.field==='y') {
+            actor.oy += change.previousValue - change.value;
+          }
+        }
+      }
+    };
 
-    }).on('actor_remove', (uid) => {
-      const actor = this.actorByUid[uid];
-      this.actorByUid[uid] = null;
+    this.room.state.actorByUid.onRemove = (actor, uid) => {
       this.actors.splice(this.actors.indexOf(actor), 1);
-
       this.app.game.remove(actor.entity);
-    });
+    };
+  }
 
-    this.active = 1;
+  disconnect() {
+    this.room.leave();
+    this.room = null;
   }
 
   loop(deltaFrame) {

@@ -1,11 +1,15 @@
 import * as http from "http";
-import * as express from "express";
+import express from "express";
 import * as fs from "fs";
-import * as md5 from "md5";
-import * as uuid from "uuid";
-import * as io from "socket.io";
+import md5 from "md5";
+import uuid from "uuid";
 
-import { Room } from "./Room";
+import { Server } from "colyseus";
+import basicAuth from "express-basic-auth";
+import socialRoutes from "@colyseus/social/express";
+import { monitor } from "@colyseus/monitor";
+
+import { BunnyRoom } from "./BunnyRoom";
 
 const api_secret = 'VmGsge58F2kL6TOCoHnq';
 
@@ -74,66 +78,20 @@ app.get("/", uglyTemplate);
 app.get("/index.html", uglyTemplate);
 
 app.use("/", express.static(__dirname + "/../dist"));
+//app.use("/", socialRoutes);
 
-const server = http.createServer(app);
-server.listen(2345, "0.0.0.0", () => {
-    console.log("Server started on:", 2345);
+const gameServer = new Server({
+    server: http.createServer(app),
+    express: app
 });
+
+gameServer.define("bunnies", BunnyRoom);
+
+const auth = basicAuth({ users: { 'admin': 'admin' }, challenge: true });
+app.use("/colyseus", auth, monitor());
+
+const port = 2345;
+gameServer.listen(port);
+console.log(`Listening on ${port}`);
 
 // https://localhost:2345/?api_id=7558520&viewer_id=1787423&auth_key=ef85ea88588c32d3dd4230d7ac040c05
-
-// ********* NETWORK ********
-
-const websocket = io.listen(server, {log: false, transports: ['websocket']});
-const wsByToken = {};
-const room = new Room();
-
-class WSUser {
-    user: User;
-    socket: any;
-    constructor(user: User, socket: any) {
-        this.user = user;
-        this.socket = socket;
-        socket.wsUser = this;
-    }
-
-    // 2. interpolation
-    onDisconnect() {
-        if (!this.socket) {
-            return;
-        }
-        this.socket.wsUser = null;
-        this.socket = null;
-        delete wsByToken[this.user.token];
-
-        room.onLeave(this);
-    }
-}
-
-websocket.on('connection', function (socket: any) {
-    const regHandler = (data) => {
-        if (data.token && userByToken[data.token]) {
-            let wsUser = wsByToken[data.token];
-            if (wsUser) {
-                wsUser.socket.disconnect();
-                wsUser.onDisconnect();
-            }
-
-            wsUser = new WSUser(userByToken[data.token], socket);
-            wsByToken[data.token] = wsUser;
-            room.onJoin(wsUser);
-
-            socket.off('reg', regHandler);
-        }
-    }
-
-    socket.on('reg', regHandler);
-
-    socket.on('disconnect', () => {
-        if (socket.wsUser) {
-            socket.wsUser.onDisconnect();
-        }
-    })
-});
-
-room.start();

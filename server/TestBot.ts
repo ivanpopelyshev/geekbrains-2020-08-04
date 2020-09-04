@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import {Actor} from './shared/Actor';
+import {Actor} from '../src/shared/Actor';
 
 let botCounter = 0;
 

@@ -1,21 +1,43 @@
-export class Actor {
+import { Schema, type, MapSchema } from "@colyseus/schema";
+
+export class ActorTarget extends Schema {
+  @type("float64")
   x: number;
+  @type("float64")
   y: number;
+
+  constructor() {
+    super();
+    this.x = 0;
+    this.y = 0;
+  }
+}
+
+export class Actor extends Schema {
+  @type("float64")
+  x: number;
+  @type("float64")
+  y: number;
+  @type("string")
   name: string;
+  @type("int32")
   uid: number;
-  target: {x: number, y: number};
+  @type(ActorTarget)
+  target: ActorTarget;
   entity: any;
   changed: boolean;
   ox: number;
   oy: number;
+  dead: boolean = false;
 
   constructor() {
+    super();
     this.x = 0;
     this.y = 0;
     this.name = 'LOCAL_PLAYER';
     this.uid = -1;
 
-    this.target = { x: 0, y: 0 };
+    this.target = new ActorTarget();
     this.entity = null;
 
     // local vars
@@ -47,37 +69,9 @@ export class Actor {
       this.y += dy / dist * dd;
     }
   }
+}
 
-  toJson() {
-    return {
-      uid: this.uid,
-      x: Math.round(this.x * 1000) / 1000,
-      y: Math.round(this.y * 1000) / 1000,
-      name: this.name,
-      target: this.target
-    };
-  }
-
-  toDeltaJson() {
-    return {
-      uid: this.uid,
-      x: Math.round(this.x * 1000) / 1000,
-      y: Math.round(this.y * 1000) / 1000,
-      target: this.target
-    };
-  }
-
-  applyJson(json) {
-    this.x = json.x;
-    this.y = json.y;
-    if (json.name) {
-      this.name = json.name;
-    }
-    if (json.uid !== this.uid) {
-      this.uid = json.uid;
-    }
-    if (json.target) {
-      this.target = json.target;
-    }
-  }
+export class State extends Schema {
+  @type({ map: Actor })
+  actorByUid = new MapSchema<Actor>();
 }
