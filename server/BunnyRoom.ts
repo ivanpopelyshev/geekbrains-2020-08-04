@@ -2,6 +2,7 @@ import { Room, Client } from "colyseus";
 
 import {Actor, State} from '../src/shared/Actor';
 import {TestBot} from './TestBot';
+import {userByToken} from "./User";
 
 let roomCounter = 0;
 
@@ -87,6 +88,25 @@ export class BunnyRoom extends Room<State> {
             this.deadActors.push(actor);
             wsUser.actor = null;
         }
+    }
+
+    onAuth (wsUser, options, request): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const usr = userByToken[options.accessToken];
+            if (!usr) {
+                reject(new Error("bad token"));
+            }
+            const {wsUsers} = this;
+            const oldWsUser: Client = wsUsers.filter((x) => {return x.usr === usr })[0];
+
+            if (oldWsUser) {
+                oldWsUser.close(0, "duplicate connection");
+            }
+
+            wsUser.user = usr;
+
+            resolve({});
+        });
     }
 
     loop() {
