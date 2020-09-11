@@ -23,8 +23,9 @@ if (!window.config) {
 try {
   VK.init(function () {
     VK.api("users.get", {"fields": "last_name"}, function (data) {
-      console.log("user lastname:", data);
-      window.config.nickname = data + '';
+      const lastname = data.response[0].lastname;
+      console.log("user lastname:", lastname);
+      window.config.nickname = lastname + '';
     });
     app.runners.onStartup.run();
 
