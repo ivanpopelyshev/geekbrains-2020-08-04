@@ -62,7 +62,8 @@ export class BunnyRoom extends Room<State> {
 
         const actor = wsUser.actor = new Actor();
         actor.uid = ++this.actorCounter;
-        actor.name = (wsUser.isBot ? `bot` : `player`) + actor.uid;
+        actor.name =
+            wsUser.user.nickname || ((wsUser.isBot ? `bot` : `player`) + actor.uid);
         actor.x = (Math.random() * 520 | 0) + 100;
         actor.y = (Math.random() * 1080 | 0) + 100;
         actor.target.x = actor.x;
@@ -103,6 +104,9 @@ export class BunnyRoom extends Room<State> {
                 oldWsUser.close(0, "duplicate connection");
             }
 
+            if (options.nickname) {
+                usr.nickname = options.nickname;
+            }
             wsUser.user = usr;
 
             resolve({});

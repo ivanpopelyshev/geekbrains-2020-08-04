@@ -44,7 +44,8 @@ export class Network {
     console.log("Success!", this.client.auth);
 
     this.room = await this.client.joinOrCreate("bunnies", {
-      accessToken: window.config.token
+      accessToken: window.config.token,
+      nickname: window.config.nickname
     });
 
     this.active = 2;

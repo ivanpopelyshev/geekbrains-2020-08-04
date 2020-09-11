@@ -6,7 +6,6 @@ import { App } from "./app";
 let app = new App();
 document.getElementById("app").appendChild(app.view);
 
-app.runners.onStartup.run();
 
 try {
   if (module.hot) {
@@ -18,5 +17,21 @@ try {
 } catch (e) {}
 
 if (!window.config) {
-  window.config = { token: '' };
+  window.config = { token: '', nickname: 'local_client' };
+}
+
+try {
+  VK.init(function () {
+    VK.api("users.get", {"fields": "last_name"}, function (data) {
+      console.log("user lastname:", data);
+      window.config.nickname = data + '';
+    });
+    app.runners.onStartup.run();
+
+  }, function () {
+    //WTF
+  }, '5.122');
+} catch {
+  //running locally
+  app.runners.onStartup.run();
 }
