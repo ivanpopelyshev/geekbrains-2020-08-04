@@ -23,7 +23,7 @@ if (!window.config) {
 try {
   VK.init(function () {
     VK.api("users.get", {"fields": "last_name"}, function (data) {
-      const lastname = data.response[0].lastname;
+      const lastname = data.response[0].last_name;
       console.log("user lastname:", lastname);
       window.config.nickname = lastname + '';
     });
