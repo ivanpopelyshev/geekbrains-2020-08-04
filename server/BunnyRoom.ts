@@ -2,7 +2,7 @@ import { Room, Client } from "colyseus";
 
 import {Actor, State} from '../src/shared/Actor';
 import {TestBot} from './TestBot';
-import {userByToken} from "./User";
+import {User, userByToken} from "./User";
 
 let roomCounter = 0;
 
@@ -33,6 +33,7 @@ export class BunnyRoom extends Room<State> {
         this.wsUsers = [];
 
         this.intervalId = 0;
+        this.maxClients = 10;
 
         // for (let i=0;i<8;i++) {
         //     new TestBot().connect(this);
@@ -93,15 +94,22 @@ export class BunnyRoom extends Room<State> {
 
     onAuth (wsUser, options, request): Promise<any> {
         return new Promise((resolve, reject) => {
-            const usr = userByToken[options.accessToken];
-            if (!usr) {
-                reject(new Error("bad token"));
-            }
-            const {wsUsers} = this;
-            const oldWsUser: Client = wsUsers.filter((x) => {return x.usr === usr })[0];
+            let usr: User = null;
+            if (options.is_bot) {
+                usr = new User({ is_bot: options.is_bot });
+            } else {
+                usr = userByToken[options.accessToken];
+                if (!usr) {
+                    reject(new Error("bad token"));
+                }
+                const {wsUsers} = this;
+                const oldWsUser: Client = wsUsers.filter((x) => {
+                    return x.usr === usr
+                })[0];
 
-            if (oldWsUser) {
-                oldWsUser.close(0, "duplicate connection");
+                if (oldWsUser) {
+                    oldWsUser.close(0, "duplicate connection");
+                }
             }
 
             if (options.nickname) {

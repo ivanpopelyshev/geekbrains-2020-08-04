@@ -6,10 +6,14 @@ const api_secret = 'VmGsge58F2kL6TOCoHnq';
 export class User {
     token: string;
     viewer_id: number;
+    nickname: string;
+    is_bot : number | false;
     constructor(options: any) {
         const {token, viewer_id} = options || {};
         this.token = token || uuid();
         this.viewer_id = +viewer_id || 0;
+        this.nickname = null;
+        this.is_bot = options.is_bot || false;
     }
 }
 
