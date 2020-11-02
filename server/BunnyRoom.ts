@@ -1,7 +1,6 @@
 import { Room, Client } from "colyseus";
 
 import {Actor, State} from '../src/shared/Actor';
-import {TestBot} from './TestBot';
 import {User, userByToken} from "./User";
 
 let roomCounter = 0;
